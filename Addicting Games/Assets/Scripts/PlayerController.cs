@@ -1,41 +1,72 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
     public float moveSpeed = 5.0f;
     public float jumpForce = 5.0f;
+    private float Move;
+
+    private Vector2 movement;
+    private Animator animator;
 
     private Rigidbody2D rb;
-    private bool canJump = true;
+    public bool canJump = true;
     private float originalSpeed; // Store the original speed
     private Color originalColor; // Store the original color
 
     private float powerUpTimer = 0.0f; // Timer to track the duration of power-up effects
     private bool hasPowerUp = false;
 
+    [SerializeField] private InputActionReference moveControl, jumpControl;
 
-    void Start()
+
+    private void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
-
         originalSpeed = moveSpeed; // Store the original speed on Start
         originalColor = GetComponent<Renderer>().material.color; // Store the original color on Start
+        
+        rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
     }
 
-    void Update()
+    private void OnMove(InputValue value)
     {
-        // Player movement
-        float moveDirection = Input.GetAxis("Horizontal");
-        Vector2 moveVelocity = rb.velocity;
-        moveVelocity.x = moveDirection * moveSpeed;
-        rb.velocity = moveVelocity;
+        movement = value.Get<Vector2>();
+
+        if (movement.x > 0 ){
+            animator.SetFloat("X", movement.x);
+            animator.SetBool("isWalking", true);
+            transform.localScale = new Vector2(1.5f,1.5f);
+            
+        } else if (movement.x < 0){
+            animator.SetFloat("X", movement.x);
+            animator.SetBool("isWalking", true);
+            transform.localScale = new Vector2(-1.5f,1.5f);
+
+        } else{
+            animator.SetBool("isWalking", false);
+            }
+    }
+
+    void FixedUpdate()
+    {
+
+        Move = Input.GetAxis("Horizontal");
+        rb.velocity = new Vector2(moveSpeed * Move, rb.velocity.y);
+
+        rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
+        
 
         // Player jump
-        if (canJump && Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetButtonDown("Jump"))
         {
-            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-            canJump = false; // Disable jumping until the player lands again
+            rb.AddForce(new Vector2(rb.velocity.x, jumpForce));
+            canJump = false;
+
+            Debug.Log("Jumped");
         }
 
         if (hasPowerUp)
@@ -48,17 +79,27 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
+    private void OnCollisionEnter2D(Collision2D other)
     {
-        // Re-enable jumping when the player lands on the ground
-        if (collision.gameObject.CompareTag("Ground"))
+        if (other.gameObject.CompareTag("Ground"))
         {
             canJump = true;
+            Debug.Log("Grounded");
+        }
+    }
+
+    private void OnCollisionExit2D(Collision2D other)
+    {
+        if (other.gameObject.CompareTag("Ground"))
+        {
+            canJump = false;
+            Debug.Log("Not Grounded");
         }
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
+
         if (other.CompareTag("PowerUp"))
         {
             // Set the power-up timer and mark that the player has a power-up

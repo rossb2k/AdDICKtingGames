@@ -3,20 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerController : MonoBehaviour
+public class OldPlayerController : MonoBehaviour
 {
 
-    private Rigidbody2D rb;
-    private Animator animator;
-    public float jump = 600f;
-    public float moveSpeed = 5f;
-    [SerializeField] private float Move;
+    // public InputAction playerControls;
+    public float moveSpeed = 5.0f;
+    public float jumpForce = 5.0f;
+    private float Move;
+
     private Vector2 movement;
-    // private bool isFacingRight = true;
+    private Animator animator;
 
+    private Rigidbody2D rb;
     public bool canJump = true;
-
-    //powerups and related junk
 
     private float originalSpeed;
     private Color originalColor;
@@ -24,28 +23,18 @@ public class PlayerController : MonoBehaviour
     private float powerUpTimer = 0.0f; // Timer to track the duration of power-up effects
     private bool hasPowerUp = false;
 
+    [SerializeField] private InputActionReference moveControl, jumpControl;
 
-    void Start()
+
+    private void Start()
     {
+        originalSpeed = moveSpeed;
+        // originalColor = GetComponent<Renderer>().material.color;
+        
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
-        originalSpeed = moveSpeed;
     }
 
-    void Update()
-    {
-
-        Move = Input.GetAxis("Horizontal");
-
-        rb.velocity = new Vector2(Move * moveSpeed, rb.velocity.y);
-
-        if (Input.GetButtonDown("Jump") && canJump){
-            rb.AddForce(new Vector2(rb.velocity.x, jump));
-        }
-
-    }
-
-    //movement
     private void OnMove(InputValue value)
     {
         movement = value.Get<Vector2>();
@@ -53,20 +42,47 @@ public class PlayerController : MonoBehaviour
         if (movement.x > 0 ){
             animator.SetFloat("X", movement.x);
             animator.SetBool("isWalking", true);
-            transform.localScale = new Vector2(1f,1f);
+            transform.localScale = new Vector2(1.5f,1.5f);
             
         } else if (movement.x < 0){
             animator.SetFloat("X", movement.x);
             animator.SetBool("isWalking", true);
-            transform.localScale = new Vector2(-1f,1f);
+            transform.localScale = new Vector2(-1.5f,1.5f);
 
         } else{
             animator.SetBool("isWalking", false);
             }
     }
 
+    void FixedUpdate()
+    {
 
-    //ground check
+        Move = Input.GetAxis("Horizontal");
+        rb.velocity = new Vector2(moveSpeed * Move, rb.velocity.y);
+
+        rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
+        
+
+        // Player jump
+        if (Input.GetButtonDown("Jump") && canJump)
+        {
+            rb.AddForce(new Vector2(rb.velocity.x, jumpForce));
+            canJump = false;
+            StartCoroutine(JumpCooldown());
+
+            Debug.Log("Jumped");
+        }
+
+        if (hasPowerUp)
+        {
+            // If the power-up timer exceeds the desired duration, revert the effects
+            if (Time.time > powerUpTimer)
+            {
+                RevertPowerUpEffects();
+            }
+        }
+    }
+
     private void OnCollisionEnter2D(Collision2D other)
     {
         if (other.gameObject.CompareTag("Ground"))
@@ -138,5 +154,14 @@ public class PlayerController : MonoBehaviour
             renderer.material.color = originalColor;
         }
     }
-    
+
+    private IEnumerator JumpCooldown()
+    {
+        canJump = false;
+        animator.SetBool("isJumping", true);
+        yield return new WaitForSeconds(0.4f);
+        canJump = true;
+        animator.SetBool("isJumping", false);
+    }
 }
+

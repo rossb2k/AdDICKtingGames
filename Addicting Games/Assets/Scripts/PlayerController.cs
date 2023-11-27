@@ -30,6 +30,7 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         originalSpeed = moveSpeed;
+        originalColor = GetComponent<Renderer>().material.color;
     }
 
     void Update()
@@ -43,6 +44,14 @@ public class PlayerController : MonoBehaviour
             rb.AddForce(new Vector2(rb.velocity.x, jump));
         }
 
+        if (hasPowerUp)
+        {
+            // If the power-up timer exceeds the desired duration, revert the effects
+            if (Time.time > powerUpTimer)
+            {
+                RevertPowerUpEffects();
+            }
+        }
     }
 
     //movement
@@ -64,6 +73,7 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("isWalking", false);
             }
     }
+
 
 
     //ground check

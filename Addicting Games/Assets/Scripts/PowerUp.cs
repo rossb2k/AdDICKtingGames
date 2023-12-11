@@ -37,8 +37,7 @@ public class PowerUp : MonoBehaviour
      void IncreasePlayerSpeed(PlayerController player)
      {
           //Calculate the speed increase based on the number of times collected
-         float currentSpeedIncrease = Mathf.Min(speedIncrease, 0.5f + timesCollected * 0.1f);
-         player.ApplySpeedIncrease(currentSpeedIncrease);
+         player.ApplySpeedIncrease(speedIncrease);
      }
 
      void ChangePlayerColor(PlayerController player)

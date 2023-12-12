@@ -46,9 +46,12 @@ TagManager:
   - name: sky
     uniqueID: 3406105207
     locked: 0
+  - name: ground
+    uniqueID: 434241401
+    locked: 0
   - name: player
     uniqueID: 3826264925
     locked: 0
-  - name: ground
-    uniqueID: 434241401
+  - name: powerup
+    uniqueID: 4102503703
     locked: 0
